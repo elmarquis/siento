@@ -8,7 +8,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function initDb() {
-    const db = await getDb();
+    // Explicitly specify dev.db path
+    const dbPath = path.join(__dirname, '..', 'dev.db');
+    const db = await getDb(dbPath);
     
     try {
         // Create Employee table

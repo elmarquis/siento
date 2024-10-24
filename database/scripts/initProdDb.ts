@@ -1,10 +1,16 @@
 import { closeDb, getDb } from '../dbUtil.js';
 
 import fetchEmployees from './fetchEmployees.js';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function initDb() {
-
-  const db = await getDb();
+  // Explicitly specify prod.db path
+  const dbPath = path.join(__dirname, '..', 'prod.db');
+  const db = await getDb(dbPath);
 
   try {
     // Create Employee table
@@ -70,7 +76,6 @@ async function initDb() {
       employeeStmt.reset();
     }
     employeeStmt.free();
-
 
     console.log('Database initialization completed successfully');
   } catch (error) {

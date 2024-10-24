@@ -1,7 +1,21 @@
 import { Employee, EmployeeWithAdditionalInfo, closeDb, dbAll, getDb } from '../dbUtil.ts';
 
+import { config } from 'dotenv';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const DEFAULT_DB = process.env.DATABASE || 'dev.db';
+const ACTIVE_DB = process.env.NODE_ENV === 'production' ? 'prod.db' : DEFAULT_DB;
+
+const dbPath = path.join(__dirname, '..', ACTIVE_DB);
+
 export async function getAllEmployees(): Promise<EmployeeWithAdditionalInfo[]> {
-    const db = await getDb();
+    const db = await getDb(dbPath);
     try {
         const employees = await dbAll<Employee>(
             db,

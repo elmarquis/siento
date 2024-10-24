@@ -1,10 +1,25 @@
 import { EmployeeAdditionalInfo, closeDb, dbGet, dbRun, getDb } from '../dbUtil.js';
 
+import { config } from 'dotenv';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const DEFAULT_DB = process.env.DATABASE || 'dev.db';
+const ACTIVE_DB = process.env.NODE_ENV === 'production' ? 'prod.db' : DEFAULT_DB;
+
+const dbPath = path.join(__dirname, '..', ACTIVE_DB);
+
 export async function updateEmployeeAdditionalInfo(
     employeeId: string,
     info: Omit<EmployeeAdditionalInfo, 'id'>
 ): Promise<void> {
-    const db = await getDb();
+  
+    const db = await getDb(dbPath);
     try {
         // First check if the employee exists
         const employee = await dbGet<{ id: string }>(

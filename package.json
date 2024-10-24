@@ -9,10 +9,12 @@
     "start": "next start",
     "lint": "next lint",
     "init-dev-db": "node --loader ts-node/esm database/scripts/initDevDb.ts",
-    "init-prod-db": "node --loader ts-node/esm database/scripts/initProdDb.ts"
+    "init-prod-db": "node --loader ts-node/esm database/scripts/initProdDb.ts",
+    "postinstall": "node scripts/checkEnvFile.js"
   },
   "dependencies": {
     "@types/sql.js": "^1.4.9",
+    "dotenv": "^16.4.5",
     "next": "15.0.1",
     "react": "19.0.0-rc-69d4b800-20241021",
     "react-dom": "19.0.0-rc-69d4b800-20241021",
