@@ -17,6 +17,7 @@ Run the development server:
 ## Database
 
 `npm run init-dev-db` creates and populates `dev.db` with seedData from database/seedData directory
+
 `npm run init-prod-db` creates and populates `prod.db` by retrieving real GC Hub member data from the westpac APIs. (Does not populate or amend data in the employeeAddionalInfo table)
 
 Install the VsCode plugin SQLite Viewer to view the .db files.
