@@ -2,39 +2,83 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+Install node modules
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+`npm install`
+
+Setup dev db
+
+`npm run init-dev-db`
+
+Run the development server:
+
+`npm run dev`
+
+## Database
+
+`npm run init-dev-db` creates and populates `dev.db` with seedData from database/seedData directory
+`npm run init-prod-db` creates and populates `prod.db` by retrieving real GC Hub member data from the westpac APIs. (Does not populate or amend data in the employeeAddionalInfo table)
+
+Install the VsCode plugin SQLite Viewer to view the .db files.
+
+There are 2 tables:
+
+### Employee
+
+Read only. Stores data fetched from the westpac APIs.
+
+### EmployeeAdditionalInfo
+
+Editable by users. Stores the additional fields we let the user add via the application.
+
+## API Endpoints
+
+### GET /api/employees
+
+Fetches a list of all employees, with additionalInformation data.
+
+**Response:**
+
+```json
+[
+  {
+    "id": "M00001",
+    "firstName": "John",
+    "lastName": "Doe",
+    "preferredName": "Johnny",
+    "title": "Mr",
+    "gender": "Male",
+    "positionTitle": "Software Engineer",
+    "photoId": "john_doe.jpg",
+    "firstStartDate": "2020-01-15",
+    "additionalInfo": {
+      "bio": "Passionate about coding and new technologies. Enjoys hiking and reading sci-fi novels.",
+      "homeSuburb": "Mudgeeraba",
+      "hobbies": "Hiking, reading sci-fi novels"
+    }
+  },
+  ...
+]
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### PUT /api/employee/{id}
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+**body:**
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+```json
+{
+  "bio": "string",
+  "homeSuburb": "string",
+  "hobbies": "string",
+}
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+Upserts additional information data for a given employee
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Response:**
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+```json
+{ 
+  "message": "Success" 
+}
+```

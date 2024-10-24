@@ -15,7 +15,7 @@ export default async function handler(
         const additionalInfo = req.body;
 
         await updateEmployeeAdditionalInfo(id as string, additionalInfo);
-        res.status(200).json({ message: 'Additional info updated successfully' });
+        res.status(200).json({ message: 'Success' });
     } catch (error) {
         console.error('Error updating additional info:', error);
         res.status(500).json({ message: 'Error updating additional info' });
