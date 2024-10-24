@@ -1,7 +1,7 @@
-import { Employee, EmployeeWithAdditionalInfo, dbAll, getDb } from '../dbUtil';
+import { Employee, EmployeeWithAdditionalInfo, closeDb, dbAll, getDb } from '../dbUtil.ts';
 
 export async function getAllEmployees(): Promise<EmployeeWithAdditionalInfo[]> {
-    const db = getDb();
+    const db = await getDb();
     try {
         const employees = await dbAll<Employee>(
             db,
@@ -24,6 +24,6 @@ export async function getAllEmployees(): Promise<EmployeeWithAdditionalInfo[]> {
             } : undefined
         }));
     } finally {
-        db.close();
+        await closeDb();
     }
 }

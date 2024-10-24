@@ -1,6 +1,8 @@
+import initSqlJs, { Database, SqlValue } from 'sql.js';
+
 import { fileURLToPath } from 'url';
+import fs from 'fs/promises';
 import path from 'path';
-import sqlite3 from 'sqlite3';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,37 +37,88 @@ export interface EmployeeWithAdditionalInfo extends Employee {
     additionalInfo?: EmployeeAdditionalInfo;
 }
 
-// Get database connection
-export function getDb(): sqlite3.Database {
-    return new sqlite3.Database(DB_PATH);
+let dbInstance: Database | null = null;
+
+// Initialize or get database connection
+export async function getDb(): Promise<Database> {
+    if (dbInstance) return dbInstance;
+
+    const SQL = await initSqlJs();
+    
+    try {
+        // Try to read existing database file
+        const data = await fs.readFile(DB_PATH);
+        dbInstance = new SQL.Database(new Uint8Array(data));
+    } catch {
+        // If file doesn't exist or can't be read, create new database
+        console.log('Creating new database file');
+        dbInstance = new SQL.Database();
+        await saveDb(); // Save empty database
+    }
+    
+    return dbInstance;
 }
 
-// Convert db.all to promise-based
-export function dbAll<T>(db: sqlite3.Database, sql: string, params: unknown[] = []): Promise<T[]> {
-    return new Promise((resolve, reject) => {
-        db.all(sql, params, (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows as T[]);
-        });
-    });
+// Save database to file
+async function saveDb() {
+    if (!dbInstance) return;
+    
+    try {
+        // Ensure directory exists
+        const dbDir = path.dirname(DB_PATH);
+        await fs.mkdir(dbDir, { recursive: true });
+        
+        // Export and save database
+        const data = dbInstance.export();
+        await fs.writeFile(DB_PATH, Buffer.from(data));
+    } catch (err) {
+        console.error('Error saving database:', err);
+        throw new Error(`Failed to save database: ${err instanceof Error ? err.message : String(err)}`);
+    }
 }
 
-// Convert db.run to promise-based
-export function dbRun(db: sqlite3.Database, sql: string, params: unknown[] = []): Promise<void> {
-    return new Promise((resolve, reject) => {
-        db.run(sql, params, (err) => {
-            if (err) reject(err);
-            else resolve();
-        });
-    });
+// Execute a query that returns rows
+export async function dbAll<T>(database: Database, sql: string, params: SqlValue[] = []): Promise<T[]> {
+    const stmt = database.prepare(sql);
+    stmt.bind(params);
+    
+    const rows: T[] = [];
+    while (stmt.step()) {
+        rows.push(stmt.getAsObject() as T);
+    }
+    stmt.free();
+    await saveDb();
+    return rows;
 }
 
-// Convert db.get to promise-based
-export function dbGet<T>(db: sqlite3.Database, sql: string, params: unknown[] = []): Promise<T | undefined> {
-    return new Promise((resolve, reject) => {
-        db.get(sql, params, (err, row) => {
-            if (err) reject(err);
-            else resolve(row as T | undefined);
-        });
-    });
+// Execute a query that doesn't return rows
+export async function dbRun(database: Database, sql: string, params: SqlValue[] = []): Promise<void> {
+    const stmt = database.prepare(sql);
+    stmt.bind(params);
+    stmt.step();
+    stmt.free();
+    await saveDb();
+}
+
+// Execute a query that returns a single row
+export async function dbGet<T>(database: Database, sql: string, params: SqlValue[] = []): Promise<T | undefined> {
+    const stmt = database.prepare(sql);
+    stmt.bind(params);
+    
+    let result: T | undefined;
+    if (stmt.step()) {
+        result = stmt.getAsObject() as T;
+    }
+    stmt.free();
+    await saveDb();
+    return result;
+}
+
+// Close database connection and save changes
+export async function closeDb(): Promise<void> {
+    if (dbInstance) {
+        await saveDb();
+        dbInstance.close();
+        dbInstance = null;
+    }
 }

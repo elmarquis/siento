@@ -1,32 +1,18 @@
+import { closeDb, getDb } from '../dbUtil.js';
+
 import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
 import path from 'path';
-import sqlite3 from 'sqlite3';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DEV_DB_PATH = path.join(__dirname, '../dev.db');
-
 async function initDb() {
-
-    // Create db file if doesn't exist
-    await fs.writeFile(DEV_DB_PATH, '');
-
-    // Create a new database connection
-    const db = new sqlite3.Database(DEV_DB_PATH);
-
-    // Convert db.run to promise-based
-    const run = (sql: string) => new Promise<void>((resolve, reject) => {
-        db.run(sql, (err: Error | null) => {
-            if (err) reject(err);
-            else resolve();
-        });
-    });
-
+    const db = await getDb();
+    
     try {
         // Create Employee table
-        await run(`
+        db.run(`
             CREATE TABLE IF NOT EXISTS Employee (
                 id TEXT PRIMARY KEY,
                 firstName TEXT,
@@ -41,7 +27,7 @@ async function initDb() {
         `);
 
         // Create EmployeeAdditionalInfo table
-        await run(`
+        db.run(`
             CREATE TABLE IF NOT EXISTS EmployeeAdditionalInfo (
                 id TEXT PRIMARY KEY,
                 bio TEXT,
@@ -52,8 +38,8 @@ async function initDb() {
         `);
 
         // Clear existing data
-        await run('DELETE FROM EmployeeAdditionalInfo');
-        await run('DELETE FROM Employee');
+        db.run('DELETE FROM EmployeeAdditionalInfo');
+        db.run('DELETE FROM Employee');
 
         // Read seed data
         const employeeData = JSON.parse(
@@ -70,25 +56,21 @@ async function initDb() {
         `);
 
         for (const employee of employeeData) {
-            await new Promise<void>((resolve, reject) => {
-                employeeStmt.run(
-                    employee.id,
-                    employee.firstName,
-                    employee.lastName,
-                    employee.preferredName,
-                    employee.title,
-                    employee.gender,
-                    employee.positionTitle,
-                    employee.photoId,
-                    employee.firstStartDate,
-                    (err: Error | null) => {
-                        if (err) reject(err);
-                        else resolve();
-                    }
-                );
-            });
+            employeeStmt.bind([
+                employee.id,
+                employee.firstName,
+                employee.lastName,
+                employee.preferredName,
+                employee.title,
+                employee.gender,
+                employee.positionTitle,
+                employee.photoId,
+                employee.firstStartDate
+            ]);
+            employeeStmt.step();
+            employeeStmt.reset();
         }
-        employeeStmt.finalize();
+        employeeStmt.free();
 
         // Insert EmployeeAdditionalInfo data
         const additionalInfoStmt = db.prepare(`
@@ -97,28 +79,23 @@ async function initDb() {
         `);
 
         for (const info of additionalInfoData) {
-            await new Promise<void>((resolve, reject) => {
-                additionalInfoStmt.run(
-                    info.id,
-                    info.bio,
-                    info.homeSuburb,
-                    info.hobbies,
-                    (err: Error | null) => {
-                        if (err) reject(err);
-                        else resolve();
-                    }
-                );
-            });
+            additionalInfoStmt.bind([
+                info.id,
+                info.bio,
+                info.homeSuburb,
+                info.hobbies
+            ]);
+            additionalInfoStmt.step();
+            additionalInfoStmt.reset();
         }
-        additionalInfoStmt.finalize();
+        additionalInfoStmt.free();
 
         console.log('Database initialization completed successfully');
     } catch (error) {
         console.error('Error initializing database:', error);
         throw error;
     } finally {
-        // Close the database connection
-        db.close();
+        await closeDb();
     }
 }
 

@@ -1,10 +1,10 @@
-import { EmployeeAdditionalInfo, dbGet, dbRun, getDb } from '../dbUtil';
+import { EmployeeAdditionalInfo, closeDb, dbGet, dbRun, getDb } from '../dbUtil.js';
 
 export async function updateEmployeeAdditionalInfo(
     employeeId: string,
     info: Omit<EmployeeAdditionalInfo, 'id'>
 ): Promise<void> {
-    const db = getDb();
+    const db = await getDb();
     try {
         // First check if the employee exists
         const employee = await dbGet<{ id: string }>(
@@ -43,6 +43,6 @@ export async function updateEmployeeAdditionalInfo(
             );
         }
     } finally {
-        db.close();
+        await closeDb();
     }
 }
