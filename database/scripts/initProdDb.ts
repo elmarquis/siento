@@ -1,4 +1,4 @@
-import fetchEmployees from './fetchEmployees';
+import fetchEmployees from './fetchEmployees.js';
 import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
 import path from 'path';
